@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main  # Specify the branch where you want tests to run
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1
+
+      - name: Set up Python 2.7
+        # uses: actions/setup-python@v4 due to https://github.com/actions/setup-python/issues/672:
+        # https://github.com/MatteoH2O1999/setup-python
+        # This action tries to build from source all Python versions that actions/setup-python
+        # does not support. It also allows to cache built versions so that after the first run,
+        # installation time is really low. Hope it works also with 20.04, else it needs more changes:
+        uses: MatteoH2O1999/setup-python@v1
+        with:
+          python-version: 2.7
+          allow-build: info
+          cache-build: true
+          cache: pip
+
+
+      - name: Install dependencies
+        run: pip install pygame
+
+      - name: Install more dependencies
+        run: pip install mock
+
+      - name: Install even more dependencies
+        run: pip install pyinstaller==3.6
+
+      - name: Install xmllint
+        run: sudo apt-get install -y python-dev
+
+      - name: Run tests
+        run: python test_sm.py  # Replace with your test command
+
+      - name: Build Executable
+        run: |
+          # Replace with your build command
+          pyinstaller --onefile contact_manager_solution.py
+          # Create the "artifacts" directory if it doesn't exist
+          mkdir -p artifacts
+          # Move the executable to the "artifacts" directory
+          mv dist/contact_manager_solution artifacts/
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: ContactManagerPython2
+          path: artifacts
